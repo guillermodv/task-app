@@ -1,16 +1,34 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
+// screens/HomeScreen.tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  Keyboard,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const colorScheme = useColorScheme();
-
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState({ priority: 'Todas', status: 'Todos' });
 
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState('Media');
+
+  const [darkMode, setDarkMode] = useState(false);
+
   useEffect(() => {
+    const loadPreferences = async () => {
+      const storedMode = await AsyncStorage.getItem('darkMode');
+      if (storedMode) setDarkMode(JSON.parse(storedMode));
+    };
+    loadPreferences();
+
     const defaultTasks = [
       {
         id: '1',
@@ -26,30 +44,16 @@ export default function HomeScreen() {
         priority: 'Media',
         status: 'Completada',
       },
-      {
-        id: '3',
-        title: 'Tarea ejemplo 3',
-        description: 'Descripción de tarea 3',
-        priority: 'Baja',
-        status: 'Pendiente',
-      },
     ];
     setTasks(defaultTasks);
   }, []);
 
-  // Agregar o actualizar tareas nuevas desde TaskForm
-  useEffect(() => {
-    if (route.params?.newTask) {
-      setTasks((prev) => {
-        const exists = prev.some((t) => t.id === route.params.newTask.id);
-        return exists
-          ? prev.map((t) => (t.id === route.params.newTask.id ? route.params.newTask : t))
-          : [...prev, route.params.newTask];
-      });
-    }
-  }, [route.params?.newTask]);
+  const toggleDarkMode = async () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    await AsyncStorage.setItem('darkMode', JSON.stringify(newMode));
+  };
 
-  // Alternar estado de tarea (Pendiente <-> Completada)
   const toggleStatus = (id) => {
     setTasks((prev) =>
       prev.map((task) =>
@@ -60,33 +64,52 @@ export default function HomeScreen() {
     );
   };
 
-  // Aplicar filtros
+  const handleAddTask = () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'El título es obligatorio');
+      return;
+    }
+    if (!description.trim()) {
+      Alert.alert('Error', 'La descripción es obligatoria');
+      return;
+    }
+
+    const newTask = {
+      id: Date.now().toString(),
+      title,
+      description,
+      priority,
+      status: 'Pendiente',
+    };
+
+    setTasks((prev) => [...prev, newTask]);
+    setTitle('');
+    setDescription('');
+    setPriority('Media');
+    Keyboard.dismiss();
+  };
+
   const filteredTasks = tasks.filter((task) => {
     const matchPriority = filter.priority === 'Todas' || task.priority === filter.priority;
     const matchStatus = filter.status === 'Todos' || task.status === filter.status;
     return matchPriority && matchStatus;
   });
 
-  // Renderizar cada tarea
   const renderTask = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => toggleStatus(item.id)}
-      onLongPress={() => navigation.navigate('TaskForm', { task: item })}
-    >
-      <View style={styles.taskCard}>
-        <Text style={styles.taskTitle}>{item.title}</Text>
-        <Text>{item.description}</Text>
-        <Text>Prioridad: {item.priority}</Text>
-        <Text>Estado: {item.status}</Text>
+    <TouchableOpacity onPress={() => toggleStatus(item.id)}>
+      <View style={[styles.taskCard, darkMode && styles.taskCardDark]}>
+        <Text style={[styles.taskTitle, darkMode && styles.textDark]}>{item.title}</Text>
+        <Text style={darkMode && styles.textDark}>{item.description}</Text>
+        <Text style={darkMode && styles.textDark}>Prioridad: {item.priority}</Text>
+        <Text style={darkMode && styles.textDark}>Estado: {item.status}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={[styles.container, colorScheme === 'dark' && styles.containerDark]}>
-      <Text style={styles.header}>Gestor de Tareas</Text>
+    <View style={[styles.container, darkMode ? styles.containerDark : styles.containerLight]}>
+      <Text style={[styles.header, darkMode && styles.textDark]}>Gestor de Tareas</Text>
 
-      {/* Filtros */}
       <View style={styles.filters}>
         <TouchableOpacity
           onPress={() =>
@@ -96,25 +119,47 @@ export default function HomeScreen() {
             }))
           }
         >
-          <Text style={styles.filterBtn}>Filtro Estado: {filter.status}</Text>
+          <Text style={styles.filterBtn}>Estado: {filter.status}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() =>
             setFilter((f) => {
-              const nextPriority =
-                f.priority === 'Todas'
-                  ? 'Alta'
-                  : f.priority === 'Alta'
-                  ? 'Media'
-                  : f.priority === 'Media'
-                  ? 'Baja'
-                  : 'Todas';
-              return { ...f, priority: nextPriority };
+              const next =
+                f.priority === 'Todas' ? 'Alta' : f.priority === 'Alta' ? 'Media' : f.priority === 'Media' ? 'Baja' : 'Todas';
+              return { ...f, priority: next };
             })
           }
         >
-          <Text style={styles.filterBtn}>Filtro Prioridad: {filter.priority}</Text>
+          <Text style={styles.filterBtn}>Prioridad: {filter.priority}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={toggleDarkMode}>
+          <Text style={styles.filterBtn}>{darkMode ? 'Modo Claro' : 'Modo Oscuro'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Título"
+          value={title}
+          onChangeText={setTitle}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Descripción"
+          value={description}
+          onChangeText={setDescription}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Prioridad (Alta, Media, Baja)"
+          value={priority}
+          onChangeText={setPriority}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
+          <Text style={styles.addButtonText}>Agregar Tarea</Text>
         </TouchableOpacity>
       </View>
 
@@ -122,24 +167,44 @@ export default function HomeScreen() {
         data={filteredTasks}
         keyExtractor={(item) => item.id}
         renderItem={renderTask}
-        ListEmptyComponent={<Text>No hay tareas.</Text>}
+        ListEmptyComponent={<Text style={darkMode && styles.textDark}>No hay tareas.</Text>}
+        style={{ marginTop: 10 }}
       />
-
-      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('TaskForm')}>
-        <Text style={styles.addButtonText}>+ Nueva Tarea</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#F3F4F6' },
+  container: { flex: 1, padding: 16 },
+  containerLight: { backgroundColor: '#F3F4F6' },
   containerDark: { backgroundColor: '#1F2937' },
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  taskCard: { backgroundColor: '#FFF', padding: 12, borderRadius: 8, marginBottom: 12 },
-  taskTitle: { fontWeight: '600', fontSize: 16 },
-  addButton: { backgroundColor: '#2563EB', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 16 },
-  addButtonText: { color: '#FFF', fontWeight: 'bold' },
   filters: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
   filterBtn: { color: '#2563EB', fontWeight: 'bold' },
+  inputContainer: { gap: 8, marginBottom: 16 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  addButton: {
+    backgroundColor: '#2563EB',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addButtonText: { color: '#FFF', fontWeight: 'bold' },
+  taskCard: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  taskCardDark: {
+    backgroundColor: '#374151',
+  },
+  taskTitle: { fontWeight: '600', fontSize: 16 },
+  textDark: { color: '#F9FAFB' },
 });

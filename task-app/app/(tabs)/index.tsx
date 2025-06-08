@@ -110,7 +110,6 @@ export default function HomeScreen() {
     <View style={[styles.container, darkMode ? styles.containerDark : styles.containerLight]}>
       <Text style={[styles.header, darkMode && styles.textDark]}>Gestor de Tareas</Text>
 
-      {/* Filtros */}
       <View style={styles.filters}>
         <TouchableOpacity
           onPress={() =>
@@ -140,7 +139,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Inputs para nueva tarea */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -165,7 +163,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de tareas */}
       <FlatList
         data={filteredTasks}
         keyExtractor={(item) => item.id}
