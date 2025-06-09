@@ -1,26 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   FlatList,
   Keyboard,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 export default function HomeScreen() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState({ priority: 'Todas', status: 'Todos' });
-
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Media');
   const [darkMode, setDarkMode] = useState(false);
-
+  const [errors, setErrors] = useState({ title: '', description: '', priority: '' });
   const router = useRouter();
 
   useEffect(() => {
@@ -35,7 +34,7 @@ export default function HomeScreen() {
         id: '1',
         title: 'Tarea ejemplo 1',
         description: 'Descripción de tarea 1',
-        priority: 'Alta',
+        priority: 'Urgente',
         status: 'Pendiente',
       },
       {
@@ -55,25 +54,35 @@ export default function HomeScreen() {
     await AsyncStorage.setItem('darkMode', JSON.stringify(newMode));
   };
 
-  const toggleStatus = (id) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? { ...task, status: task.status === 'Pendiente' ? 'Completada' : 'Pendiente' }
-          : task
-      )
-    );
-  };
-
   const handleAddTask = () => {
+    let valid = true;
+    let newErrors = { title: '', description: '', priority: '' };
+
     if (!title.trim()) {
-      Alert.alert('Error', 'El título es obligatorio');
-      return;
+      newErrors.title = 'El título es obligatorio.';
+      valid = false;
+    } else if (title.trim().length < 3) {
+      newErrors.title = 'El título debe tener al menos 3 caracteres.';
+      valid = false;
     }
+
     if (!description.trim()) {
-      Alert.alert('Error', 'La descripción es obligatoria');
-      return;
+      newErrors.description = 'La descripción es obligatoria.';
+      valid = false;
+    } else if (description.trim().length < 5) {
+      newErrors.description = 'La descripción debe tener al menos 5 caracteres.';
+      valid = false;
     }
+
+    const validPriorities = ['Urgente', 'Media', 'Baja'];
+    if (!validPriorities.includes(priority)) {
+      newErrors.priority = 'Seleccioná una prioridad válida.';
+      valid = false;
+    }
+
+    setErrors(newErrors);
+
+    if (!valid) return;
 
     const newTask = {
       id: Date.now().toString(),
@@ -87,7 +96,15 @@ export default function HomeScreen() {
     setTitle('');
     setDescription('');
     setPriority('Media');
+    setErrors({ title: '', description: '', priority: '' });
     Keyboard.dismiss();
+  };
+
+  const goToTask = (task) => {
+    router.push({
+      pathname: '/taskScreen',
+      params: task,
+    });
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -96,22 +113,22 @@ export default function HomeScreen() {
     return matchPriority && matchStatus;
   });
 
+  const renderPriorityColor = (priority) => {
+    switch (priority) {
+      case 'Urgente': return '#DC2626'; // rojo
+      case 'Media': return '#FBBF24'; // amarillo
+      case 'Baja': return '#22C55E'; // verde
+      default: return '#9CA3AF';
+    }
+  };
+
   const renderTask = ({ item }) => (
-    <TouchableOpacity
-      onPress={() =>
-        router.push({
-          pathname: '/taskScreen',
-          params: {
-            title: item.title,
-            description: item.description,
-            priority: item.priority,
-            status: item.status,
-          },
-        })
-      }
-    >
+    <TouchableOpacity onPress={() => goToTask(item)}>
       <View style={[styles.taskCard, darkMode && styles.taskCardDark]}>
-        <Text style={[styles.taskTitle, darkMode && styles.textDark]}>{item.title}</Text>
+        <View style={styles.taskHeader}>
+          <View style={[styles.circle, { backgroundColor: renderPriorityColor(item.priority) }]} />
+          <Text style={[styles.taskTitle, darkMode && styles.textDark]}>{item.title}</Text>
+        </View>
         <Text style={darkMode && styles.textDark}>{item.description}</Text>
         <Text style={darkMode && styles.textDark}>Prioridad: {item.priority}</Text>
         <Text style={darkMode && styles.textDark}>Estado: {item.status}</Text>
@@ -136,19 +153,13 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() =>
-            setFilter((f) => {
-              const next =
-                f.priority === 'Todas'
-                  ? 'Alta'
-                  : f.priority === 'Alta'
-                  ? 'Media'
-                  : f.priority === 'Media'
-                  ? 'Baja'
-                  : 'Todas';
-              return { ...f, priority: next };
-            })
-          }
+          onPress={() => {
+            const next =
+              filter.priority === 'Todas' ? 'Urgente' :
+              filter.priority === 'Urgente' ? 'Media' :
+              filter.priority === 'Media' ? 'Baja' : 'Todas';
+            setFilter({ ...filter, priority: next });
+          }}
         >
           <Text style={styles.filterBtn}>Prioridad: {filter.priority}</Text>
         </TouchableOpacity>
@@ -165,18 +176,29 @@ export default function HomeScreen() {
           value={title}
           onChangeText={setTitle}
         />
+        {errors.title ? <Text style={styles.errorText}>{errors.title}</Text> : null}
+
         <TextInput
           style={styles.input}
           placeholder="Descripción"
           value={description}
           onChangeText={setDescription}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Prioridad (Alta, Media, Baja)"
-          value={priority}
-          onChangeText={setPriority}
-        />
+        {errors.description ? <Text style={styles.errorText}>{errors.description}</Text> : null}
+
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={priority}
+            onValueChange={(itemValue) => setPriority(itemValue)}
+            style={{ height: 40 }}
+          >
+            <Picker.Item label="Urgente" value="Urgente" />
+            <Picker.Item label="Media" value="Media" />
+            <Picker.Item label="Baja" value="Baja" />
+          </Picker>
+        </View>
+        {errors.priority ? <Text style={styles.errorText}>{errors.priority}</Text> : null}
+
         <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
           <Text style={styles.addButtonText}>Agregar Tarea</Text>
         </TouchableOpacity>
@@ -208,6 +230,12 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: '#FFFFFF',
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+  },
   addButton: {
     backgroundColor: '#2563EB',
     padding: 12,
@@ -224,6 +252,18 @@ const styles = StyleSheet.create({
   taskCardDark: {
     backgroundColor: '#374151',
   },
+  taskHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  circle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
   taskTitle: { fontWeight: '600', fontSize: 16 },
   textDark: { color: '#F9FAFB' },
+  errorText: { color: '#DC2626', fontSize: 12, marginTop: -6, marginBottom: 6 },
 });
