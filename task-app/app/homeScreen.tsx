@@ -1,5 +1,5 @@
-// screens/HomeScreen.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -19,8 +19,9 @@ export default function HomeScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Media');
-
   const [darkMode, setDarkMode] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -96,7 +97,19 @@ export default function HomeScreen() {
   });
 
   const renderTask = ({ item }) => (
-    <TouchableOpacity onPress={() => toggleStatus(item.id)}>
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: '/taskScreen',
+          params: {
+            title: item.title,
+            description: item.description,
+            priority: item.priority,
+            status: item.status,
+          },
+        })
+      }
+    >
       <View style={[styles.taskCard, darkMode && styles.taskCardDark]}>
         <Text style={[styles.taskTitle, darkMode && styles.textDark]}>{item.title}</Text>
         <Text style={darkMode && styles.textDark}>{item.description}</Text>
@@ -126,7 +139,13 @@ export default function HomeScreen() {
           onPress={() =>
             setFilter((f) => {
               const next =
-                f.priority === 'Todas' ? 'Alta' : f.priority === 'Alta' ? 'Media' : f.priority === 'Media' ? 'Baja' : 'Todas';
+                f.priority === 'Todas'
+                  ? 'Alta'
+                  : f.priority === 'Alta'
+                  ? 'Media'
+                  : f.priority === 'Media'
+                  ? 'Baja'
+                  : 'Todas';
               return { ...f, priority: next };
             })
           }
