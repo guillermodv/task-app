@@ -241,7 +241,7 @@ export default function HomeScreen() {
         {errors.description ? <Text style={styles.errorText}>{errors.description}</Text> : null}
 
         <View style={[styles.pickerContainer, darkMode && { backgroundColor: '#4B5563' }]}>
-          <Picker selectedValue={priority} onValueChange={setPriority} style={{ height: 40 }}>
+          <Picker selectedValue={priority} onValueChange={setPriority} style={{ height: 50 }}>
             <Picker.Item label="Urgente" value="Urgente" />
             <Picker.Item label="Media" value="Media" />
             <Picker.Item label="Baja" value="Baja" />
@@ -250,7 +250,7 @@ export default function HomeScreen() {
         {errors.priority ? <Text style={styles.errorText}>{errors.priority}</Text> : null}
 
         <View style={[styles.pickerContainer, darkMode && { backgroundColor: '#4B5563' }]}>
-          <Picker selectedValue={status} onValueChange={setStatus} style={{ height: 40 }}>
+          <Picker selectedValue={status} onValueChange={setStatus} style={{ height: 50 }}>
             <Picker.Item label="Pendiente" value="Pendiente" />
             <Picker.Item label="Completada" value="Completada" />
           </Picker>
@@ -282,13 +282,14 @@ const styles = StyleSheet.create({
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
   subheader: { fontSize: 16, fontWeight: 'bold', marginBottom: 16 },
   filters: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  filterBtn: { color: '#2563EB', fontWeight: 'bold' },
+  filterBtn: { color: '#2563EB' },
   inputContainer: { gap: 8, marginBottom: 16 },
   input: {
     borderWidth: 1,
     borderColor: '#D1D5DB',
     borderRadius: 6,
     padding: 8,
+    height: 50,
     backgroundColor: '#FFFFFF',
   },
   pickerContainer: {
