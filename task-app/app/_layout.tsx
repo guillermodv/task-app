@@ -18,7 +18,8 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
     <Stack>
-      <Stack.Screen name="homeScreen" options={{ title: 'Home' }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="homeScreen" options={{ title: 'Dashboard' }} />
       <Stack.Screen name="taskScreen" options={{ title: 'Detalle de Tarea' }} />
     </Stack>
     </ThemeProvider>

@@ -1,7 +1,4 @@
-// app/index.tsx
-
-import HomeScreen from "./homeScreen";
+import Login from "./login";
 
 
-
-export default HomeScreen;
+export default Login;
