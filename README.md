@@ -1,5 +1,7 @@
 # Gestor de Tareas con Prioridades
 
+## Para loguearte usar usuario "prueba" password "prueba"
+
 ## 📱 Descripción
 Aplicación móvil desarrollada en React Native que permite gestionar tareas, asignar prioridades y llevar el control de su estado.
 
@@ -7,15 +9,14 @@ Aplicación móvil desarrollada en React Native que permite gestionar tareas, as
 - Crear, editar y eliminar tareas.
 - Asignar prioridades y estados.
 - Filtro por estado o prioridad.
-- Persistencia local y sincronización con API.
 - Modo claro/oscuro.
+- Vista de tarea propiamente dicha.
+
 
 ## 🛠️ Tecnologías y Librerías Principales
 - React Native
 - React Navigation
 - AsyncStorage
-- Context API
-- Firebase (opcional)
 - Axios / Fetch
 
 ## 🧪 Instalación y Ejecución
@@ -23,5 +24,4 @@ Aplicación móvil desarrollada en React Native que permite gestionar tareas, as
 npm install
 npx expo start # o npx react-native run-android
 
-Para loguearte usar usuario "prueba" password "prueba"
 
