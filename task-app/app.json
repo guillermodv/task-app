@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "task-app",
-    "slug": "task-app",
+    "name": "Administrador de Tareas",
+    "slug": "slug",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/image.png",
     "scheme": "taskapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
